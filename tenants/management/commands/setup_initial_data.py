@@ -5,10 +5,14 @@ Management command to set up initial system data:
 - System Module Permissions for all sub modules
 - Base Licence with all modules
 - UCC Tenant with Base Licence
+- Main Office organization
+- Admin role with all permissions
+- main_admin user
 """
 
 from django.core.management.base import BaseCommand
 from django.utils.text import slugify
+from django.contrib.auth import get_user_model
 
 from tenants.models import (
     Module,
@@ -19,6 +23,10 @@ from tenants.models import (
     Tenant,
     TenantSettings,
 )
+from accounts.models import Role, RolePermission
+from strategy.models import Organization
+
+User = get_user_model()
 
 
 class Command(BaseCommand):
@@ -168,6 +176,76 @@ class Command(BaseCommand):
         )
         self.stdout.write(self.style.SUCCESS("✓ Created tenant settings for UCC"))
 
+        # 8. Create Main Office organization
+        self.stdout.write("Creating Main Office organization...")
+        main_office, created = Organization.objects.get_or_create(
+            tenant=ucc_tenant,
+            name="Main Office",
+            defaults={
+                "location": "Main Office",
+            },
+        )
+        if created:
+            self.stdout.write(self.style.SUCCESS("✓ Created Main Office organization"))
+        else:
+            self.stdout.write("  Main Office organization already exists")
+
+        # 9. Create Admin role
+        self.stdout.write("Creating Admin role...")
+        admin_role, created = Role.objects.get_or_create(
+            code="admin",
+            defaults={
+                "name": "Admin",
+                "is_active": True,
+            },
+        )
+        if created:
+            self.stdout.write(self.style.SUCCESS("✓ Created Admin role"))
+        else:
+            self.stdout.write("  Admin role already exists")
+
+        # 10. Attach all permissions to Admin role
+        self.stdout.write("Attaching permissions to Admin role...")
+        all_permissions = SystemModulePermission.objects.filter(is_active=True)
+        role_permissions_created = 0
+        
+        for permission in all_permissions:
+            role_permission, created = RolePermission.objects.get_or_create(
+                role=admin_role,
+                permission=permission,
+                defaults={
+                    "is_active": True,
+                },
+            )
+            if created:
+                role_permissions_created += 1
+        
+        self.stdout.write(
+            self.style.SUCCESS(f"✓ Attached {role_permissions_created} permissions to Admin role")
+        )
+
+        # 11. Create main_admin user
+        self.stdout.write("Creating main_admin user...")
+        main_admin, created = User.objects.get_or_create(
+            username="main_admin",
+            defaults={
+                "email": "main_admin@ucc.com",
+                "tenant": ucc_tenant,
+                "role": admin_role,
+                "organization": main_office,
+                "is_active": True,
+                "is_staff": True,
+            },
+        )
+        if created:
+            # Set a default password (should be changed on first login)
+            main_admin.set_password("admin123")
+            main_admin.save()
+            self.stdout.write(self.style.SUCCESS("✓ Created main_admin user"))
+            self.stdout.write(self.style.WARNING("  Default password: admin123 (please change on first login)"))
+        else:
+            self.stdout.write("  main_admin user already exists")
+
         # Summary
         self.stdout.write("\n" + "=" * 60)
         self.stdout.write(self.style.SUCCESS("Initial data setup completed successfully!"))
@@ -178,5 +256,9 @@ class Command(BaseCommand):
         self.stdout.write(f"Licences: {Licence.objects.count()}")
         self.stdout.write(f"Licence Modules: {LicenceModule.objects.count()}")
         self.stdout.write(f"Tenants: {Tenant.objects.count()}")
+        self.stdout.write(f"Organizations: {Organization.objects.count()}")
+        self.stdout.write(f"Roles: {Role.objects.count()}")
+        self.stdout.write(f"Role Permissions: {RolePermission.objects.count()}")
+        self.stdout.write(f"Users: {User.objects.count()}")
         self.stdout.write("=" * 60)
 

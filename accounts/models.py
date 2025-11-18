@@ -7,7 +7,6 @@ class Role(models.Model):
 
     name = models.CharField(max_length=128)
     code = models.CharField(max_length=64)
-    permissions = models.ManyToManyField("tenants.SystemModulePermission", blank=True, related_name="roles")
     is_active = models.BooleanField(default=True)
 
     class Meta:
@@ -19,11 +18,54 @@ class Role(models.Model):
 
     def has_permission_code(self, module_code: str, permission_code: str) -> bool:
         # permission_code expected to be the ModulePermission.codename or action; support both
-        # First check codename exact match on resource
-        if self.permissions.filter(resource__code=module_code, codename=permission_code, is_active=True).exists():
+        # Check through RolePermission relationship
+        # First check codename exact match on resource (using module code from SubModule's module)
+        if self.role_permissions.filter(
+            permission__resource__module__code=module_code, 
+            permission__codename=permission_code, 
+            permission__is_active=True,
+            is_active=True
+        ).exists():
             return True
         # Fallback: if permission_code is an action (e.g., 'create'), check by action
-        return self.permissions.filter(resource__code=module_code, action=permission_code, is_active=True).exists()
+        return self.role_permissions.filter(
+            permission__resource__module__code=module_code, 
+            permission__action=permission_code, 
+            permission__is_active=True,
+            is_active=True
+        ).exists()
+    
+    def get_permissions(self):
+        """Get all active permissions for this role."""
+        from tenants.models import SystemModulePermission
+        return SystemModulePermission.objects.filter(
+            role_permissions__role=self,
+            role_permissions__is_active=True,
+            is_active=True
+        ).distinct()
+        
+
+class RolePermission(models.Model):
+    """Explicit through table tracking permissions assigned to roles."""
+    
+    role = models.ForeignKey("Role", on_delete=models.CASCADE, related_name="role_permissions")
+    permission = models.ForeignKey("tenants.SystemModulePermission", on_delete=models.CASCADE, related_name="role_permissions")
+    granted_at = models.DateTimeField(auto_now_add=True)
+    granted_by = models.ForeignKey("accounts.User", on_delete=models.SET_NULL, null=True, blank=True, related_name="granted_permissions")
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        unique_together = [["role", "permission"]]
+        ordering = ["role", "permission"]
+        verbose_name = "Role Permission"
+        verbose_name_plural = "Role Permissions"
+        indexes = [
+            models.Index(fields=["role", "permission"]),
+            models.Index(fields=["role", "is_active"]),
+        ]
+    
+    def __str__(self) -> str:
+        return f"{self.role.name} - {self.permission.name}"
 
 
 
@@ -32,6 +74,7 @@ class User(AbstractUser):
 
     tenant = models.ForeignKey("tenants.Tenant", on_delete=models.PROTECT, related_name="users", null=True, blank=True)
     role = models.ForeignKey(Role, on_delete=models.PROTECT, related_name="users", null=True, blank=True)
+    organization = models.ForeignKey("strategy.Organization", on_delete=models.PROTECT, related_name="users", null=True, blank=True)
     is_tenant_admin = models.BooleanField(default=False)
 
     class Meta:
@@ -49,7 +92,7 @@ class User(AbstractUser):
         if base_has:
             return True
 
-        # Check role-based permissions
+        # Check role-based permissions through RolePermission
         if not self.role_id:
             return False
 
@@ -59,7 +102,10 @@ class User(AbstractUser):
             # Invalid perm format; deny
             return False
 
-        return self.role.permissions.filter(content_type__app_label=app_label, codename=codename).exists()
+        # Note: SystemModulePermission is separate from Django's Permission model
+        # For Django permissions, check user's direct permissions or groups
+        # Custom RBAC permissions are checked via has_permission_code method
+        return False
 
     def has_module_perms(self, app_label):
         if self.is_superuser:
@@ -68,7 +114,10 @@ class User(AbstractUser):
             return True
         if not self.role_id:
             return False
-        return self.role.permissions.filter(content_type__app_label=app_label).exists()
+        # Note: SystemModulePermission is separate from Django's Permission model
+        # For Django module permissions, check user's direct permissions or groups
+        # Custom RBAC permissions are checked via has_permission_code method
+        return False
 
     # Custom RBAC check using RolePermission
     def has_permission_code(self, module_code: str, permission_code: str) -> bool:

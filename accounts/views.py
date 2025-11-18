@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from tenants.models import SystemModulePermission, Tenant
-from .models import Role, User
+from .models import Role, User, RolePermission
 from .serializers import RoleSerializer, UserSerializer
 
 
@@ -23,11 +23,11 @@ def parse_bool(value):
 class RoleListCreateAPIView(APIView):
     def get(self, request):
         queryset = Role.objects.all()
-        serializer = RoleSerializer(queryset, many=True)
+        serializer = RoleSerializer(queryset, many=True, context={"request": request})
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = RoleSerializer(data=request.data)
+        serializer = RoleSerializer(data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -36,18 +36,18 @@ class RoleListCreateAPIView(APIView):
 class RoleDetailAPIView(APIView):
     def get(self, request, pk):
         obj = Role.objects.get(pk=pk)
-        return Response(RoleSerializer(obj).data)
+        return Response(RoleSerializer(obj, context={"request": request}).data)
 
     def put(self, request, pk):
         obj = Role.objects.get(pk=pk)
-        serializer = RoleSerializer(obj, data=request.data)
+        serializer = RoleSerializer(obj, data=request.data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
 
     def patch(self, request, pk):
         obj = Role.objects.get(pk=pk)
-        serializer = RoleSerializer(obj, data=request.data, partial=True)
+        serializer = RoleSerializer(obj, data=request.data, partial=True, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -110,10 +110,19 @@ class MyPermissionsAPIView(APIView):
 
     def get(self, request):
         user: User = request.user
-        perms_qs = SystemModulePermission.objects.filter(roles__users=user, is_active=True).select_related("resource")
+        if not user.role_id:
+            return Response([])
+        
+        # Get permissions through RolePermission
+        perms_qs = SystemModulePermission.objects.filter(
+            role_permissions__role=user.role,
+            role_permissions__is_active=True,
+            is_active=True
+        ).select_related("resource", "resource__module").distinct()
+        
         return Response([
             {
-                "module": p.resource.code,
+                "module": p.resource.module.code,
                 "action": p.action,
                 "codename": p.codename,
                 "name": p.name,
@@ -152,17 +161,24 @@ class TenantAuthAPIView(APIView):
         if not isinstance(user, User) or user.tenant_id != tenant.id or not user.is_active:
             raise AuthenticationFailed({"detail": "User does not belong to this tenant or is inactive"})
 
-        # Get user's permissions
-        perms_qs = SystemModulePermission.objects.filter(roles__users=user, is_active=True).select_related("resource")
-        permissions = [
-            {
-                "module": p.resource.code,
-                "action": p.action,
-                "codename": p.codename,
-                "name": p.name,
-            }
-            for p in perms_qs
-        ]
+        # Get user's permissions through RolePermission
+        permissions = []
+        if user.role_id:
+            perms_qs = SystemModulePermission.objects.filter(
+                role_permissions__role=user.role,
+                role_permissions__is_active=True,
+                is_active=True
+            ).select_related("resource", "resource__module").distinct()
+            
+            permissions = [
+                {
+                    "module": p.resource.module.code,
+                    "action": p.action,
+                    "codename": p.codename,
+                    "name": p.name,
+                }
+                for p in perms_qs
+            ]
 
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
