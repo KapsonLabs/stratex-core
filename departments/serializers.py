@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Department, DepartmentObjective, Team, TeamObjective, KPI, Initiative
+from .models import Department, DepartmentObjective, Team, TeamObjective, KPI, Initiative, Employee, EmployeeReportingLine
 
 
 # Department Serializers
@@ -30,20 +30,28 @@ class DepartmentDetailSerializer(serializers.ModelSerializer):
 class DepartmentObjectiveCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = DepartmentObjective
-        fields = ["department", "objective", "composite_weight", "target", "status"]
+        fields = ["department", "department_objective_name", "objective", "composite_weight", "objective_target", "status"]
 
 
 class DepartmentObjectiveDetailSerializer(serializers.ModelSerializer):
     department = serializers.StringRelatedField(read_only=True)
     objective = serializers.StringRelatedField(read_only=True)
     team_objectives_count = serializers.SerializerMethodField()
+    kpis_count = serializers.SerializerMethodField()
+    objective_score = serializers.SerializerMethodField()
 
     class Meta:
         model = DepartmentObjective
-        fields = ["id", "department", "objective", "composite_weight", "target", "status", "team_objectives_count", "created_at","updated_at"]
+        fields = ["id", "department", "department_objective_name", "objective", "composite_weight", "objective_target", "status", "team_objectives_count", "kpis_count", "objective_score", "created_at","updated_at"]
 
     def get_team_objectives_count(self, obj):
         return obj.team_objectives.count()
+
+    def get_kpis_count(self, obj):
+        return obj.kpis.count()
+
+    def get_objective_score(self, obj):
+        return 0
 
 
 # Team Serializers
@@ -57,10 +65,11 @@ class TeamDetailSerializer(serializers.ModelSerializer):
     department = serializers.StringRelatedField(read_only=True)
     team_objectives_count = serializers.SerializerMethodField()
     initiatives_count = serializers.SerializerMethodField()
+    team_performance = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
-        fields = ["id","department","name","lead_id","team_objectives_count","initiatives_count","created_at","updated_at"]
+        fields = ["id","department","name","lead_id","team_objectives_count","initiatives_count","team_performance","created_at","updated_at"]
 
     def get_team_objectives_count(self, obj):
         return obj.team_objectives.count()
@@ -68,12 +77,15 @@ class TeamDetailSerializer(serializers.ModelSerializer):
     def get_initiatives_count(self, obj):
         return obj.initiatives.count()
 
+    def get_team_performance(self, obj):
+        return 0
+
 
 # TeamObjective Serializers
 class TeamObjectiveCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeamObjective
-        fields = ["team", "dept_objective", "status"]
+        fields = ["team", "dept_objective", "team_objective_name", "objective_target", "team_objective_description", "status"]
 
 
 class TeamObjectiveDetailSerializer(serializers.ModelSerializer):
@@ -82,7 +94,7 @@ class TeamObjectiveDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeamObjective
-        fields = ["id", "team", "dept_objective", "status", "created_at", "updated_at"]
+        fields = ["id", "team", "dept_objective", "team_objective_name", "objective_target", "team_objective_description", "status", "created_at", "updated_at"]
 
 
 # KPI Serializers
@@ -133,4 +145,142 @@ class InitiativeDetailSerializer(serializers.ModelSerializer):
 
     def get_team_objectives_count(self, obj):
         return obj.team_objectives.count()
+
+
+# Employee Serializers
+class EmployeeCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Employee
+        fields = ["related_user", "department", "team", "job_title", "is_department_head"]
+
+    def validate(self, attrs):
+        """Ensure only one department head per department."""
+        is_department_head = attrs.get("is_department_head", False)
+        department = attrs.get("department")
+        
+        if is_department_head and department:
+            existing_head = Employee.objects.filter(
+                department=department,
+                is_department_head=True
+            ).exclude(pk=self.instance.pk if self.instance else None)
+            
+            if existing_head.exists():
+                raise serializers.ValidationError(
+                    {
+                        "is_department_head": f"Department '{department.name}' already has a head assigned. "
+                        "Only one employee per department can be designated as department head."
+                    }
+                )
+        
+        return attrs
+
+
+class EmployeeDetailSerializer(serializers.ModelSerializer):
+    related_user = serializers.SerializerMethodField()
+    department = serializers.StringRelatedField(read_only=True)
+    team = serializers.StringRelatedField(read_only=True)
+    reporting_lines_count = serializers.SerializerMethodField()
+    direct_reports_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Employee
+        fields = [
+            "id",
+            "related_user",
+            "department",
+            "team",
+            "job_title",
+            "is_department_head",
+            "reporting_lines_count",
+            "direct_reports_count",
+            "created_at",
+            "updated_at"
+        ]
+
+    def get_related_user(self, obj):
+        """Return user details."""
+        user = obj.related_user
+        return {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "full_name": user.get_full_name() or user.username,
+        }
+
+    def get_reporting_lines_count(self, obj):
+        """Count of reporting relationships for this employee."""
+        return obj.reporting_lines.count()
+
+    def get_direct_reports_count(self, obj):
+        """Count of employees reporting to this employee."""
+        return obj.direct_reports.count()
+
+
+# EmployeeReportingLine Serializers
+class EmployeeReportingLineCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EmployeeReportingLine
+        fields = ["employee", "reports_to", "relationship_type"]
+
+    def validate(self, attrs):
+        """Ensure employee cannot report to themselves."""
+        employee = attrs.get("employee")
+        reports_to = attrs.get("reports_to")
+        
+        if employee and reports_to and employee.id == reports_to.id:
+            raise serializers.ValidationError(
+                {"reports_to": "An employee cannot report to themselves."}
+            )
+        
+        return attrs
+
+
+class EmployeeReportingLineDetailSerializer(serializers.ModelSerializer):
+    employee = serializers.SerializerMethodField()
+    reports_to = serializers.SerializerMethodField()
+    relationship_type_display = serializers.CharField(source="get_relationship_type_display", read_only=True)
+
+    class Meta:
+        model = EmployeeReportingLine
+        fields = [
+            "id",
+            "employee",
+            "reports_to",
+            "relationship_type",
+            "relationship_type_display",
+            "created_at",
+            "updated_at"
+        ]
+
+    def get_employee(self, obj):
+        """Return employee details."""
+        emp = obj.employee
+        user = emp.related_user
+        return {
+            "id": emp.id,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "full_name": user.get_full_name() or user.username,
+            },
+            "job_title": emp.job_title,
+            "department": emp.department.name,
+        }
+
+    def get_reports_to(self, obj):
+        """Return reports_to employee details."""
+        emp = obj.reports_to
+        user = emp.related_user
+        return {
+            "id": emp.id,
+            "user": {
+                "id": user.id,
+                "username": user.username,
+                "full_name": user.get_full_name() or user.username,
+            },
+            "job_title": emp.job_title,
+            "department": emp.department.name,
+        }
 

@@ -116,72 +116,72 @@ class Command(BaseCommand):
         # 3. Create Department Objectives
         self.stdout.write("Creating Department Objectives...")
         dept_objectives_data = [
-            {"title": "Increase Stakeholder satisfaction", "dept_name": "Legal", "composite_weight": 70, "objective_name": "Increase Communications User satisfaction", "status": "active"},
-            {"title": "Strengthen Regulatory Frameworks", "dept_name": "Legal", "composite_weight": 80, "objective_name": "Improve Regulatory Processes", "status": "active"},
-            {"title": "Optimize Resources", "dept_name": "Legal", "composite_weight": 80, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Improve Board, Legal and PDU Compliance Management", "dept_name": "Legal", "composite_weight": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Improve Board, Legal and PDU Process Efficiency", "dept_name": "Legal", "composite_weight": 70, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Strengthen Legal and PDU Risk Management", "dept_name": "Legal", "composite_weight": 70, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Promote use of communication services", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 11, "objective_name": "Increase Communications User satisfaction", "status": "active"},
-            {"title": "Improve UCUSAF operational efficiency", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 11, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Increase project monitoring turnaround", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 80, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Improve project conceptualization", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 90, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Improve contract management", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 90, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Improve Resource Mobilisation and Use", "dept_name": "Finance", "composite_weight": 100, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Increase Customer & Stakeholder Satisfaction", "dept_name": "Finance", "composite_weight": 80, "objective_name": "Increase Communications User satisfaction", "status": "active"},
-            {"title": "Decrease Number of Rolled Over projects", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 25, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Enhance Financial Accountability", "dept_name": "Finance", "composite_weight": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Strengthen stakeholder relationships", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Improve Revenue Management", "dept_name": "Finance", "composite_weight": 100, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Improve customer & stakeholder satisfaction", "dept_name": "Human Resources and Administration", "composite_weight": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Strengthen Expenditure Management", "dept_name": "Finance", "composite_weight": 85, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Strengthen Financial Reporting", "dept_name": "Finance", "composite_weight": 90, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Increase employee productivity", "dept_name": "Human Resources and Administration", "composite_weight": 88, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
-            {"title": "Optimize HRA resources", "dept_name": "Human Resources and Administration", "composite_weight": 95, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Enhance Planning & Budgeting", "dept_name": "Finance", "composite_weight": 100, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Improve DF Skills, Knowledge & Abilities", "dept_name": "Finance", "composite_weight": 100, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
-            {"title": "Improve HRA operational efficiency", "dept_name": "Human Resources and Administration", "composite_weight": 11, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Enhance UCC Business success", "dept_name": "Legal", "composite_weight": 80, "objective_name": "Improve Tools & Technology", "status": "active"},
-            {"title": "Staff Performance", "dept_name": "Legal", "composite_weight": 80, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
-            {"title": "Improve/Promote good governance", "dept_name": "Internal Audit", "composite_weight": 75, "objective_name": "Maximize Stakeholder Value", "status": "active"},
-            {"title": "Improve HRA tools & Technology", "dept_name": "Human Resources and Administration", "composite_weight": 11, "objective_name": "Improve Tools & Technology", "status": "active"},
-            {"title": "Improve timely conclusion of complaints •Consumer complaints •Content complaints •Licensee disputes", "dept_name": "Industry Affairs and Content", "composite_weight": 11, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Improve the timely availability of information to stakeholders •Market reports •Consumer advisories •Content quota reports •Competition scans", "dept_name": "Industry Affairs and Content", "composite_weight": 11, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Reduce cost of doing business/operation", "dept_name": "Industry Affairs and Content", "composite_weight": 11, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Enhance Stakeholder Collaboration", "dept_name": "Internal Audit", "composite_weight": 75, "objective_name": "Maximize Stakeholder Value", "status": "active"},
-            {"title": "Optimise Financial Resource Use", "dept_name": "Internal Audit", "composite_weight": 90, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Improve quality of audit services", "dept_name": "Internal Audit", "composite_weight": 80, "objective_name": "Maximize Stakeholder Value", "status": "active"},
-            {"title": "Enhance UCC business process", "dept_name": "Internal Audit", "composite_weight": 70, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Strengthen coordination of Risk management", "dept_name": "Internal Audit", "composite_weight": 70, "objective_name": "Maximize Stakeholder Value", "status": "active"},
-            {"title": "Improve responsiveness of the regulatory frameworks and standards", "dept_name": "Industry Affairs and Content", "composite_weight": 11, "objective_name": "Improve Regulatory Processes", "status": "active"},
-            {"title": "Improve the timeliness of DIAC's plan execution, compliance activities and assessment decisions", "dept_name": "Industry Affairs and Content", "composite_weight": 11, "objective_name": "Improve Regulatory Processes", "status": "active"},
-            {"title": "Improve IAC Tools & Technology capability for better work environment & processes •Online data portal •Digital logger •Call Centre", "dept_name": "Industry Affairs and Content", "composite_weight": 11, "objective_name": "Improve Tools & Technology", "status": "active"},
-            {"title": "Strengthen Internal Compliance Monitoring", "dept_name": "Internal Audit", "composite_weight": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Improve Quality of Communication services offered by Licensees", "dept_name": "Engineering & Communication Infrastructure", "composite_weight": 11, "objective_name": "Promote Sector Competitiveness", "status": "active"},
-            {"title": "Improve IA Tools and Technologies", "dept_name": "Internal Audit", "composite_weight": 80, "objective_name": "Improve Tools & Technology", "status": "active"},
-            {"title": "Improve IA Skills, knowledge and Abilities", "dept_name": "Internal Audit", "composite_weight": 75, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
-            {"title": "Improve utilization of Communication Resources (Spectrum, Numbering and Electronic Addressing/LCNs)", "dept_name": "Engineering & Communication Infrastructure", "composite_weight": 80, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Improve the timeliness of ECI's actions, compliance activities and assessment decisions", "dept_name": "Engineering & Communication Infrastructure", "composite_weight": 83, "objective_name": "Improve Regulatory Processes", "status": "active"},
-            {"title": "Improve availability of our technical tools to be used when required", "dept_name": "Engineering & Communication Infrastructure", "composite_weight": 80, "objective_name": "Improve Tools & Technology", "status": "active"},
+            {"title": "Increase Stakeholder satisfaction", "dept_name": "Legal", "composite_weight": 70, "target": 70, "objective_name": "Increase Communications User satisfaction", "status": "active"},
+            {"title": "Strengthen Regulatory Frameworks", "dept_name": "Legal", "composite_weight": 80,  "target": 70, "objective_name": "Improve Regulatory Processes", "status": "active"},
+            {"title": "Optimize Resources", "dept_name": "Legal", "composite_weight": 80, "target": 75, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Improve Board, Legal and PDU Compliance Management", "dept_name": "Legal", "composite_weight": 80, "target": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Improve Board, Legal and PDU Process Efficiency", "dept_name": "Legal", "composite_weight": 70, "target": 70, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Strengthen Legal and PDU Risk Management", "dept_name": "Legal", "composite_weight": 70, "target": 70, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Promote use of communication services", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 11, "target": 60, "objective_name": "Increase Communications User satisfaction", "status": "active"},
+            {"title": "Improve UCUSAF operational efficiency", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 11, "target": 60, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Increase project monitoring turnaround", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 80, "target": 80, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Improve project conceptualization", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 90, "target": 90, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Improve contract management", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 90, "target": 90, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Improve Resource Mobilisation and Use", "dept_name": "Finance", "composite_weight": 100, "target": 70, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Increase Customer & Stakeholder Satisfaction", "dept_name": "Finance", "composite_weight": 80, "target": 80, "objective_name": "Increase Communications User satisfaction", "status": "active"},
+            {"title": "Decrease Number of Rolled Over projects", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 25, "target": 65, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Enhance Financial Accountability", "dept_name": "Finance", "composite_weight": 80, "target": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Strengthen stakeholder relationships", "dept_name": "Uganda Communications Universal Service Access Fund", "composite_weight": 80, "target": 85, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Improve Revenue Management", "dept_name": "Finance", "composite_weight": 100, "target": 70, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Improve customer & stakeholder satisfaction", "dept_name": "Human Resources and Administration", "composite_weight": 80, "target": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Strengthen Expenditure Management", "dept_name": "Finance", "composite_weight": 85, "target": 85, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Strengthen Financial Reporting", "dept_name": "Finance", "composite_weight": 90, "target": 90, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Increase employee productivity", "dept_name": "Human Resources and Administration", "composite_weight": 88, "target": 88, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
+            {"title": "Optimize HRA resources", "dept_name": "Human Resources and Administration", "composite_weight": 95, "target": 95, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Enhance Planning & Budgeting", "dept_name": "Finance", "composite_weight": 100, "target": 100, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Improve DF Skills, Knowledge & Abilities", "dept_name": "Finance", "composite_weight": 100, "target": 100, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
+            {"title": "Improve HRA operational efficiency", "dept_name": "Human Resources and Administration", "composite_weight": 11, "target": 60, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Enhance UCC Business success", "dept_name": "Legal", "composite_weight": 80, "target": 75, "objective_name": "Improve Tools & Technology", "status": "active"},
+            {"title": "Staff Performance", "dept_name": "Legal", "composite_weight": 80, "target":70, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
+            {"title": "Improve/Promote good governance", "dept_name": "Internal Audit", "composite_weight": 75, "target": 75, "objective_name": "Maximize Stakeholder Value", "status": "active"},
+            {"title": "Improve HRA tools & Technology", "dept_name": "Human Resources and Administration", "composite_weight": 11, "target": 60, "objective_name": "Improve Tools & Technology", "status": "active"},
+            {"title": "Improve timely conclusion of complaints •Consumer complaints •Content complaints •Licensee disputes", "dept_name": "Industry Affairs and Content", "composite_weight": 11, "target": 60, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Improve the timely availability of information to stakeholders •Market reports •Consumer advisories •Content quota reports •Competition scans", "dept_name": "Industry Affairs and Content", "composite_weight": 11, "target": 60, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Reduce cost of doing business/operation", "dept_name": "Industry Affairs and Content", "composite_weight": 11, "target": 60, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Enhance Stakeholder Collaboration", "dept_name": "Internal Audit", "composite_weight": 75, "target": 75, "objective_name": "Maximize Stakeholder Value", "status": "active"},
+            {"title": "Optimise Financial Resource Use", "dept_name": "Internal Audit", "composite_weight": 90, "target": 90, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Improve quality of audit services", "dept_name": "Internal Audit", "composite_weight": 80, "target": 80, "objective_name": "Maximize Stakeholder Value", "status": "active"},
+            {"title": "Enhance UCC business process", "dept_name": "Internal Audit", "composite_weight": 70, "target": 70, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Strengthen coordination of Risk management", "dept_name": "Internal Audit", "composite_weight": 70, "target": 70, "objective_name": "Maximize Stakeholder Value", "status": "active"},
+            {"title": "Improve responsiveness of the regulatory frameworks and standards", "dept_name": "Industry Affairs and Content", "composite_weight": 11, "target": 60, "objective_name": "Improve Regulatory Processes", "status": "active"},
+            {"title": "Improve the timeliness of DIAC's plan execution, compliance activities and assessment decisions", "dept_name": "Industry Affairs and Content", "composite_weight": 11, "target": 60, "objective_name": "Improve Regulatory Processes", "status": "active"},
+            {"title": "Improve IAC Tools & Technology capability for better work environment & processes •Online data portal •Digital logger •Call Centre", "dept_name": "Industry Affairs and Content", "composite_weight": 11, "target": 60, "objective_name": "Improve Tools & Technology", "status": "active"},
+            {"title": "Strengthen Internal Compliance Monitoring", "dept_name": "Internal Audit", "composite_weight": 80, "target": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Improve Quality of Communication services offered by Licensees", "dept_name": "Engineering & Communication Infrastructure", "composite_weight": 11, "target": 60, "objective_name": "Promote Sector Competitiveness", "status": "active"},
+            {"title": "Improve IA Tools and Technologies", "dept_name": "Internal Audit", "composite_weight": 80, "target": 80, "objective_name": "Improve Tools & Technology", "status": "active"},
+            {"title": "Improve IA Skills, knowledge and Abilities", "dept_name": "Internal Audit", "composite_weight": 75, "target": 75, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
+            {"title": "Improve utilization of Communication Resources (Spectrum, Numbering and Electronic Addressing/LCNs)", "dept_name": "Engineering & Communication Infrastructure", "composite_weight": 80, "target": 80, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Improve the timeliness of ECI's actions, compliance activities and assessment decisions", "dept_name": "Engineering & Communication Infrastructure", "composite_weight": 83, "target": 83, "objective_name": "Improve Regulatory Processes", "status": "active"},
+            {"title": "Improve availability of our technical tools to be used when required", "dept_name": "Engineering & Communication Infrastructure", "composite_weight": 80, "target": 80, "objective_name": "Improve Tools & Technology", "status": "active"},
             {"title": "Improve customer and stakeholder satisfaction", "dept_name": "ICT & Research", "composite_weight": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Improve cyber security", "dept_name": "ICT & Research", "composite_weight": 60, "objective_name": "Increase Communications User satisfaction", "status": "active"},
-            {"title": "Optimize ICT&R resources", "dept_name": "ICT & Research", "composite_weight": 100, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Strengthen risk Management", "dept_name": "ICT & Research", "composite_weight": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Enhance Knowledge Management", "dept_name": "ICT & Research", "composite_weight": 67, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
-            {"title": "Improve Operational efficiency", "dept_name": "ICT & Research", "composite_weight": 60, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Improve Tools and Technology", "dept_name": "ICT & Research", "composite_weight": 80, "objective_name": "Improve Tools & Technology", "status": "active"},
-            {"title": "Enhance Staff Performance", "dept_name": "ICT & Research", "composite_weight": 70, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
-            {"title": "Enhance UCC Business success", "dept_name": "ICT & Research", "composite_weight": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Improve stakeholder awareness", "dept_name": "Corporate Affairs", "composite_weight": 70, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Enhance visibility and image of UCC Brand", "dept_name": "Corporate Affairs", "composite_weight": 80, "objective_name": "Enhance Organizational Culture", "status": "active"},
-            {"title": "Enhance UCC Business Success", "dept_name": "Corporate Affairs", "composite_weight": 80, "objective_name": "Promote Sector Competitiveness", "status": "active"},
-            {"title": "Minimize Budget Variance", "dept_name": "Corporate Affairs", "composite_weight": 90, "objective_name": "Optimize Resources", "status": "active"},
-            {"title": "Improve Corporate Performance Reporting", "dept_name": "Corporate Affairs", "composite_weight": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Enhance coordination of CA Internal stakeholders", "dept_name": "Corporate Affairs", "composite_weight": 75, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
-            {"title": "Increase CA System & Process Efficiency", "dept_name": "Corporate Affairs", "composite_weight": 70, "objective_name": "Improve Tools & Technology", "status": "active"},
-            {"title": "Improve productivity of Corporate Affairs Staff", "dept_name": "Corporate Affairs", "composite_weight": 80, "objective_name": "Improve Staff Skills Knowledge and Abilities", "status": "active"},
-            {"title": "Improve CA Tools & Technology", "dept_name": "Corporate Affairs", "composite_weight": 50, "objective_name": "Improve Tools & Technology", "status": "active"},
-            {"title": "Improve Skills, Knowledge & Abilities", "dept_name": "Industry Affairs and Content", "composite_weight": 70, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
+            {"title": "Improve cyber security", "dept_name": "ICT & Research", "composite_weight": 60, "target": 60, "objective_name": "Increase Communications User satisfaction", "status": "active"},
+            {"title": "Optimize ICT&R resources", "dept_name": "ICT & Research", "composite_weight": 100, "target": 100, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Strengthen risk Management", "dept_name": "ICT & Research", "composite_weight": 80, "target": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Enhance Knowledge Management", "dept_name": "ICT & Research", "composite_weight": 67, "target": 67, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
+            {"title": "Improve Operational efficiency", "dept_name": "ICT & Research", "composite_weight": 60, "target": 60, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Improve Tools and Technology", "dept_name": "ICT & Research", "composite_weight": 80, "target": 80, "objective_name": "Improve Tools & Technology", "status": "active"},
+            {"title": "Enhance Staff Performance", "dept_name": "ICT & Research", "composite_weight": 70, "target": 70, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
+            {"title": "Enhance UCC Business success", "dept_name": "ICT & Research", "composite_weight": 80, "target": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Improve stakeholder awareness", "dept_name": "Corporate Affairs", "composite_weight": 70, "target": 70, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Enhance visibility and image of UCC Brand", "dept_name": "Corporate Affairs", "composite_weight": 80, "target": 80, "objective_name": "Enhance Organizational Culture", "status": "active"},
+            {"title": "Enhance UCC Business Success", "dept_name": "Corporate Affairs", "composite_weight": 80, "target": 80, "objective_name": "Promote Sector Competitiveness", "status": "active"},
+            {"title": "Minimize Budget Variance", "dept_name": "Corporate Affairs", "composite_weight": 90, "target": 90, "objective_name": "Optimize Resources", "status": "active"},
+            {"title": "Improve Corporate Performance Reporting", "dept_name": "Corporate Affairs", "composite_weight": 80, "target": 80, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Enhance coordination of CA Internal stakeholders", "dept_name": "Corporate Affairs", "composite_weight": 75, "target": 75, "objective_name": "Strengthen Stakeholder Collaboration", "status": "active"},
+            {"title": "Increase CA System & Process Efficiency", "dept_name": "Corporate Affairs", "composite_weight": 70, "target": 70, "objective_name": "Improve Tools & Technology", "status": "active"},
+            {"title": "Improve productivity of Corporate Affairs Staff", "dept_name": "Corporate Affairs", "composite_weight": 80, "target": 80, "objective_name": "Improve Staff Skills Knowledge and Abilities", "status": "active"},
+            {"title": "Improve CA Tools & Technology", "dept_name": "Corporate Affairs", "composite_weight": 50, "target": 50, "objective_name": "Improve Tools & Technology", "status": "active"},
+            {"title": "Improve Skills, Knowledge & Abilities", "dept_name": "Industry Affairs and Content", "composite_weight": 70, "target": 70, "objective_name": "Improve Knowledge Skills and Abilities", "status": "active"},
         ]
 
         dept_objectives_created = 0
@@ -216,10 +216,11 @@ class Command(BaseCommand):
             dept_objective, created = DepartmentObjective.objects.get_or_create(
                 department=department,
                 objective=objective,
-                target=dept_obj_data["title"],
+                department_objective_name=dept_obj_data["title"],
                 defaults={
                     "composite_weight": Decimal(str(dept_obj_data["composite_weight"])),
                     "status": status,
+                    "objective_target": Decimal(str(dept_obj_data["composite_weight"])),
                 },
             )
             if created:
@@ -892,15 +893,36 @@ class Command(BaseCommand):
             # Map status: 1 -> "in_progress"
             status = "in_progress" if team_obj_data["status"] == 1 else "draft"
             
-            # Create team objective
+            # Get target value from data, default to empty string if 0 or not provided
+            target = team_obj_data.get("target", "")
+            if target == 0 or target == "0":
+                target = Decimal("70")
+            else:
+                target = Decimal(str(target)) if target else Decimal("70")
+            
+            # Create team objective - lookup by team and dept_objective, set name and target in defaults
             team_objective, created = TeamObjective.objects.get_or_create(
                 team=team,
                 dept_objective=dept_objective,
                 defaults={
+                    "team_objective_name": team_obj_data["title"],
+                    "objective_target": target,
                     "status": status,
                 },
             )
-            if created:
+            # Update if exists but name/target might have changed
+            if not created:
+                updated = False
+                if team_objective.team_objective_name != team_obj_data["title"]:
+                    team_objective.team_objective_name = team_obj_data["title"]
+                    updated = True
+                if team_objective.objective_target != target:
+                    team_objective.objective_target = target
+                    updated = True
+                if updated:
+                    team_objective.save()
+                    self.stdout.write(f"  ✓ Updated team objective: {team_obj_data['title']} ({team_name})")
+            else:
                 team_objectives_created += 1
                 self.stdout.write(f"  ✓ Created team objective: {team_obj_data['title']} ({team_name})")
             

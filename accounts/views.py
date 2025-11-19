@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed, ValidationError
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -9,7 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from tenants.models import SystemModulePermission, Tenant
 from .models import Role, User, RolePermission
-from .serializers import RoleSerializer, UserSerializer
+from .serializers import RoleSerializer, UserSerializer, AuthUserSerializer
 
 
 def parse_bool(value):
@@ -137,48 +137,24 @@ class TenantAuthAPIView(APIView):
     Expects: { "tenant_slug": "...", "username": "...", "password": "..." }
     Returns: User details + permissions + JWT tokens
     """
+    permission_classes = [AllowAny]
 
     def post(self, request):
-        tenant_slug = request.data.get("tenant_slug")
-        username = request.data.get("username")
-        password = request.data.get("password")
-
-        if not all([tenant_slug, username, password]):
-            raise ValidationError({"detail": "tenant_slug, username, and password are required"})
-
-        # Verify tenant exists and is active
-        try:
-            tenant = Tenant.objects.select_related("licence").get(slug=tenant_slug, is_active=True)
-        except Tenant.DoesNotExist:
-            raise AuthenticationFailed({"detail": "Invalid tenant or inactive tenant"})
-
-        # Authenticate user credentials
-        user = authenticate(username=username, password=password)
-        if not user:
-            raise AuthenticationFailed({"detail": "Invalid username or password"})
-
-        # Verify user belongs to this tenant and is active
-        if not isinstance(user, User) or user.tenant_id != tenant.id or not user.is_active:
-            raise AuthenticationFailed({"detail": "User does not belong to this tenant or is inactive"})
-
-        # Get user's permissions through RolePermission
-        permissions = []
-        if user.role_id:
-            perms_qs = SystemModulePermission.objects.filter(
-                role_permissions__role=user.role,
-                role_permissions__is_active=True,
-                is_active=True
-            ).select_related("resource", "resource__module").distinct()
+        serializer = AuthUserSerializer(data=request.data)
+        is_valid = serializer.is_valid(raise_exception=True)
+        if not is_valid:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        user = serializer.validated_data["user"]
             
-            permissions = [
-                {
-                    "module": p.resource.module.code,
-                    "action": p.action,
-                    "codename": p.codename,
-                    "name": p.name,
-                }
-                for p in perms_qs
-            ]
+        permissions = [
+            {
+                "module": p.resource.module.code,
+                "action": p.action,
+                "codename": p.codename,
+                "name": p.name,
+            }
+            for p in user.get_permissions()
+        ]
 
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)

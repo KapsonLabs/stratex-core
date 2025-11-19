@@ -41,7 +41,7 @@ class DepartmentListCreateAPIView(APIView):
         check_user_organization_access(request.user, organization)
         queryset = Department.objects.filter(organization=organization).select_related("organization")
         serializer = DepartmentDetailSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({"status": 200, "data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request, organization_id):
         organization = Organization.objects.get(pk=organization_id)
@@ -49,7 +49,7 @@ class DepartmentListCreateAPIView(APIView):
         serializer = DepartmentCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save(organization=organization)
-        return Response(DepartmentDetailSerializer(serializer.instance).data, status=status.HTTP_201_CREATED)
+        return Response({"status": 201, "data": DepartmentDetailSerializer(serializer.instance).data}, status=status.HTTP_201_CREATED)
 
 
 class DepartmentDetailAPIView(APIView):
@@ -59,7 +59,7 @@ class DepartmentDetailAPIView(APIView):
         organization = Organization.objects.get(pk=organization_id)
         check_user_organization_access(request.user, organization)
         obj = Department.objects.select_related("organization").get(pk=pk, organization=organization)
-        return Response(DepartmentDetailSerializer(obj).data)
+        return Response({"status": 200, "data": DepartmentDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def put(self, request, organization_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -68,7 +68,7 @@ class DepartmentDetailAPIView(APIView):
         serializer = DepartmentCreateSerializer(obj, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(DepartmentDetailSerializer(obj).data)
+        return Response({"status": 200, "data": DepartmentDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def patch(self, request, organization_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -77,14 +77,14 @@ class DepartmentDetailAPIView(APIView):
         serializer = DepartmentCreateSerializer(obj, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(DepartmentDetailSerializer(obj).data)
+        return Response({"status": 200, "data": DepartmentDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def delete(self, request, organization_id, pk):
         organization = Organization.objects.get(pk=organization_id)
         check_user_organization_access(request.user, organization)
         obj = Department.objects.get(pk=pk, organization=organization)
         obj.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"status": 204, "message": "Department deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 # DepartmentObjective Views
@@ -98,7 +98,7 @@ class DepartmentObjectiveListCreateAPIView(APIView):
             department_id=department_id, department__organization=organization
         ).select_related("department", "objective")
         serializer = DepartmentObjectiveDetailSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({"status": 200, "data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request, organization_id, department_id):
         organization = Organization.objects.get(pk=organization_id)
@@ -109,7 +109,7 @@ class DepartmentObjectiveListCreateAPIView(APIView):
         if serializer.validated_data.get("department").organization_id != organization.id:
             raise PermissionDenied("Department does not belong to this organization")
         serializer.save()
-        return Response(DepartmentObjectiveDetailSerializer(serializer.instance).data, status=status.HTTP_201_CREATED)
+        return Response({"status": 201, "data": DepartmentObjectiveDetailSerializer(serializer.instance).data}, status=status.HTTP_201_CREATED)
 
 
 class DepartmentObjectiveDetailAPIView(APIView):
@@ -121,7 +121,7 @@ class DepartmentObjectiveDetailAPIView(APIView):
         obj = DepartmentObjective.objects.select_related("department", "objective").get(
             pk=pk, department_id=department_id, department__organization=organization
         )
-        return Response(DepartmentObjectiveDetailSerializer(obj).data)
+        return Response({"status": 200, "data": DepartmentObjectiveDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def put(self, request, organization_id, department_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -132,7 +132,7 @@ class DepartmentObjectiveDetailAPIView(APIView):
         serializer = DepartmentObjectiveCreateSerializer(obj, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(DepartmentObjectiveDetailSerializer(obj).data)
+        return Response({"status": 200, "data": DepartmentObjectiveDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def patch(self, request, organization_id, department_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -143,7 +143,7 @@ class DepartmentObjectiveDetailAPIView(APIView):
         serializer = DepartmentObjectiveCreateSerializer(obj, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(DepartmentObjectiveDetailSerializer(obj).data)
+        return Response({"status": 200, "data": DepartmentObjectiveDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def delete(self, request, organization_id, department_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -152,7 +152,7 @@ class DepartmentObjectiveDetailAPIView(APIView):
             pk=pk, department_id=department_id, department__organization=organization
         )
         obj.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"status": 204, "message": "Department objective deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 # Team Views
@@ -166,7 +166,7 @@ class TeamListCreateAPIView(APIView):
             department_id=department_id, department__organization=organization
         ).select_related("department")
         serializer = TeamDetailSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({"status": 200, "data": serializer.data}, status=status.HTTP_200_OK)    
 
     def post(self, request, organization_id, department_id):
         organization = Organization.objects.get(pk=organization_id)
@@ -177,7 +177,7 @@ class TeamListCreateAPIView(APIView):
         if serializer.validated_data.get("department").organization_id != organization.id:
             raise PermissionDenied("Department does not belong to this organization")
         serializer.save()
-        return Response(TeamDetailSerializer(serializer.instance).data, status=status.HTTP_201_CREATED)
+        return Response({"status": 201, "data": TeamDetailSerializer(serializer.instance).data}, status=status.HTTP_201_CREATED)
 
 
 class TeamDetailAPIView(APIView):
@@ -186,10 +186,13 @@ class TeamDetailAPIView(APIView):
     def get(self, request, organization_id, department_id, pk):
         organization = Organization.objects.get(pk=organization_id)
         check_user_organization_access(request.user, organization)
-        obj = Team.objects.select_related("department").get(
-            pk=pk, department_id=department_id, department__organization=organization
-        )
-        return Response(TeamDetailSerializer(obj).data)
+        try:
+            obj = Team.objects.select_related("department").get(
+                pk=pk, department_id=department_id, department__organization=organization
+            )
+            return Response({"status": 200, "data": TeamDetailSerializer(obj).data}, status=status.HTTP_200_OK)
+        except Team.DoesNotExist:
+            return Response({"status": 404, "message": "Team not found"}, status=status.HTTP_404_NOT_FOUND)
 
     def put(self, request, organization_id, department_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -200,7 +203,7 @@ class TeamDetailAPIView(APIView):
         serializer = TeamCreateSerializer(obj, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(TeamDetailSerializer(obj).data)
+        return Response({"status": 200, "data": TeamDetailSerializer(obj).data}, status=status.HTTP_200_OK) 
 
     def patch(self, request, organization_id, department_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -211,7 +214,7 @@ class TeamDetailAPIView(APIView):
         serializer = TeamCreateSerializer(obj, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(TeamDetailSerializer(obj).data)
+        return Response({"status": 200, "data": TeamDetailSerializer(obj).data}, status=status.HTTP_200_OK) 
 
     def delete(self, request, organization_id, department_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -220,7 +223,7 @@ class TeamDetailAPIView(APIView):
             pk=pk, department_id=department_id, department__organization=organization
         )
         obj.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"status": 204, "message": "Team deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 # TeamObjective Views
@@ -232,9 +235,9 @@ class TeamObjectiveListCreateAPIView(APIView):
         check_user_organization_access(request.user, organization)
         queryset = TeamObjective.objects.filter(
             team_id=team_id, team__department__organization=organization
-        ).select_related("team", "dept_objective", "kpi", "initiative")
+        ).select_related("team", "dept_objective")
         serializer = TeamObjectiveDetailSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({"status": 200, "data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request, organization_id, department_id, team_id):
         organization = Organization.objects.get(pk=organization_id)
@@ -242,7 +245,7 @@ class TeamObjectiveListCreateAPIView(APIView):
         serializer = TeamObjectiveCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(TeamObjectiveDetailSerializer(serializer.instance).data, status=status.HTTP_201_CREATED)
+        return Response({"status": 201, "data": TeamObjectiveDetailSerializer(serializer.instance).data}, status=status.HTTP_201_CREATED)
 
 
 class TeamObjectiveDetailAPIView(APIView):
@@ -251,10 +254,10 @@ class TeamObjectiveDetailAPIView(APIView):
     def get(self, request, organization_id, department_id, team_id, pk):
         organization = Organization.objects.get(pk=organization_id)
         check_user_organization_access(request.user, organization)
-        obj = TeamObjective.objects.select_related("team", "dept_objective", "kpi", "initiative").get(
+        obj = TeamObjective.objects.select_related("team", "dept_objective").get(
             pk=pk, team_id=team_id, team__department__organization=organization
         )
-        return Response(TeamObjectiveDetailSerializer(obj).data)
+        return Response({"status": 200, "data": TeamObjectiveDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def put(self, request, organization_id, department_id, team_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -265,7 +268,7 @@ class TeamObjectiveDetailAPIView(APIView):
         serializer = TeamObjectiveCreateSerializer(obj, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(TeamObjectiveDetailSerializer(obj).data)
+        return Response({"status": 200, "data": TeamObjectiveDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def patch(self, request, organization_id, department_id, team_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -276,7 +279,7 @@ class TeamObjectiveDetailAPIView(APIView):
         serializer = TeamObjectiveCreateSerializer(obj, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(TeamObjectiveDetailSerializer(obj).data)
+        return Response({"status": 200, "data": TeamObjectiveDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def delete(self, request, organization_id, department_id, team_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -285,7 +288,7 @@ class TeamObjectiveDetailAPIView(APIView):
             pk=pk, team_id=team_id, team__department__organization=organization
         )
         obj.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"status": 204, "message": "Team objective deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 # KPI Views
@@ -299,7 +302,7 @@ class KPIListCreateAPIView(APIView):
             objective_id=objective_id, objective__organization=organization
         ).select_related("objective")
         serializer = KPIDetailSerializer(queryset, many=True)
-        return Response(serializer.data)
+        return Response({"status": 200, "data": serializer.data}, status=status.HTTP_200_OK)
 
     def post(self, request, organization_id, objective_id):
         organization = Organization.objects.get(pk=organization_id)
@@ -310,7 +313,7 @@ class KPIListCreateAPIView(APIView):
         if serializer.validated_data.get("objective").organization_id != organization.id:
             raise PermissionDenied("Objective does not belong to this organization")
         serializer.save()
-        return Response(KPIDetailSerializer(serializer.instance).data, status=status.HTTP_201_CREATED)
+        return Response({"status": 201, "data": KPIDetailSerializer(serializer.instance).data}, status=status.HTTP_201_CREATED)
 
 
 class KPIDetailAPIView(APIView):
@@ -322,7 +325,7 @@ class KPIDetailAPIView(APIView):
         obj = KPI.objects.select_related("objective").get(
             pk=pk, objective_id=objective_id, objective__organization=organization
         )
-        return Response(KPIDetailSerializer(obj).data)
+        return Response({"status": 200, "data": KPIDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def put(self, request, organization_id, objective_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -333,7 +336,7 @@ class KPIDetailAPIView(APIView):
         serializer = KPICreateSerializer(obj, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(KPIDetailSerializer(obj).data)
+        return Response({"status": 200, "data": KPIDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def patch(self, request, organization_id, objective_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -344,7 +347,7 @@ class KPIDetailAPIView(APIView):
         serializer = KPICreateSerializer(obj, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(KPIDetailSerializer(obj).data)
+        return Response({"status": 200, "data": KPIDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def delete(self, request, organization_id, objective_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -353,7 +356,7 @@ class KPIDetailAPIView(APIView):
             pk=pk, objective_id=objective_id, objective__organization=organization
         )
         obj.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"status": 204, "message": "KPI deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 # Initiative Views
@@ -363,11 +366,14 @@ class InitiativeListCreateAPIView(APIView):
     def get(self, request, organization_id, department_id, team_id):
         organization = Organization.objects.get(pk=organization_id)
         check_user_organization_access(request.user, organization)
-        queryset = Initiative.objects.filter(
-            team_id=team_id, team__department__organization=organization
-        ).select_related("team")
-        serializer = InitiativeDetailSerializer(queryset, many=True)
-        return Response(serializer.data)
+        try:
+            queryset = Initiative.objects.filter(
+                team_id=team_id, team__department__organization=organization
+            ).select_related("team")
+            serializer = InitiativeDetailSerializer(queryset, many=True)
+            return Response({"status": 200, "data": serializer.data}, status=status.HTTP_200_OK)
+        except Initiative.DoesNotExist:
+            return Response({"status": 404, "message": "Team not found"}, status=status.HTTP_404_NOT_FOUND)
 
     def post(self, request, organization_id, department_id, team_id):
         organization = Organization.objects.get(pk=organization_id)
@@ -378,7 +384,7 @@ class InitiativeListCreateAPIView(APIView):
         if serializer.validated_data.get("team").department.organization_id != organization.id:
             raise PermissionDenied("Team does not belong to this organization")
         serializer.save()
-        return Response(InitiativeDetailSerializer(serializer.instance).data, status=status.HTTP_201_CREATED)
+        return Response({"status": 201, "data": InitiativeDetailSerializer(serializer.instance).data}, status=status.HTTP_201_CREATED)
 
 
 class InitiativeDetailAPIView(APIView):
@@ -390,7 +396,7 @@ class InitiativeDetailAPIView(APIView):
         obj = Initiative.objects.select_related("team").get(
             pk=pk, team_id=team_id, team__department__organization=organization
         )
-        return Response(InitiativeDetailSerializer(obj).data)
+        return Response({"status": 200, "data": InitiativeDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def put(self, request, organization_id, department_id, team_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -401,7 +407,7 @@ class InitiativeDetailAPIView(APIView):
         serializer = InitiativeCreateSerializer(obj, data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(InitiativeDetailSerializer(obj).data)
+        return Response({"status": 200, "data": InitiativeDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def patch(self, request, organization_id, department_id, team_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -412,7 +418,7 @@ class InitiativeDetailAPIView(APIView):
         serializer = InitiativeCreateSerializer(obj, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        return Response(InitiativeDetailSerializer(obj).data)
+        return Response({"status": 200, "data": InitiativeDetailSerializer(obj).data}, status=status.HTTP_200_OK)
 
     def delete(self, request, organization_id, department_id, team_id, pk):
         organization = Organization.objects.get(pk=organization_id)
@@ -421,4 +427,4 @@ class InitiativeDetailAPIView(APIView):
             pk=pk, team_id=team_id, team__department__organization=organization
         )
         obj.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({"status": 204, "message": "Initiative deleted successfully"}, status=status.HTTP_204_NO_CONTENT)

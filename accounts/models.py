@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Permission
+from tenants.models import SystemModulePermission
 
 
 class Role(models.Model):
@@ -129,3 +130,9 @@ class User(AbstractUser):
         if not self.tenant.has_module_enabled(module_code):
             return False
         return self.role.has_permission_code(module_code, permission_code)
+
+    def get_permissions(self):
+        """Return all active SystemModulePermissions available to this user via their role."""
+        if not self.role_id:
+            return SystemModulePermission.objects.none()
+        return self.role.get_permissions()

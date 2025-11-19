@@ -1,7 +1,7 @@
 from rest_framework import serializers
-
+from django.contrib.auth import authenticate
 from .models import Role, User, RolePermission
-from tenants.models import SystemModulePermission
+from tenants.models import SystemModulePermission, Tenant
 
 
 class RolePermissionSerializer(serializers.ModelSerializer):
@@ -97,4 +97,21 @@ class UserSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["date_joined", "last_login"]
 
+
+class AuthUserSerializer(serializers.Serializer):
+    username = serializers.CharField(required=True)
+    password = serializers.CharField(required=True, style={"input_type": "password"})
+
+    def validate(self, attrs):
+        username = attrs.get("username")
+        password = attrs.get("password")
+
+        user = authenticate(username=username, password=password)
+        if not user:
+            raise serializers.ValidationError("Invalid username/password")
+        if not user.is_active:
+            raise serializers.ValidationError("User account is inactive")
+
+        attrs["user"] = user
+        return attrs
 
