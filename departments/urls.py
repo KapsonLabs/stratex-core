@@ -30,12 +30,12 @@ urlpatterns = [
     path("<int:organization_id>/departments/<int:department_id>/teams/<int:pk>/", TeamDetailAPIView.as_view(), name="team-detail"),
     
     # Team Objectives (scoped to team)
-    path("<int:organization_id>/departments/<int:department_id>/teams/<int:team_id>/team-objectives/", TeamObjectiveListCreateAPIView.as_view(), name="team-objective-list"),
-    path("<int:organization_id>/departments/<int:department_id>/teams/<int:team_id>/team-objectives/<int:pk>/", TeamObjectiveDetailAPIView.as_view(), name="team-objective-detail"),
+    path("<int:organization_id>/teams/<int:team_id>/team-objectives/", TeamObjectiveListCreateAPIView.as_view(), name="team-objective-list"),
+    path("<int:organization_id>/teams/<int:team_id>/team-objectives/<int:pk>/", TeamObjectiveDetailAPIView.as_view(), name="team-objective-detail"),
     
-    # KPIs (scoped to objective)
-    path("<int:organization_id>/objectives/<int:objective_id>/kpis/", KPIListCreateAPIView.as_view(), name="kpi-list"),
-    path("<int:organization_id>/objectives/<int:objective_id>/kpis/<int:pk>/", KPIDetailAPIView.as_view(), name="kpi-detail"),
+    # KPIs (can be scoped to objective or team_objective via query params)
+    path("<int:organization_id>/kpis/", KPIListCreateAPIView.as_view(), name="kpi-list"),
+    path("<int:organization_id>/kpis/<int:pk>/", KPIDetailAPIView.as_view(), name="kpi-detail"),
     
     # Initiatives (scoped to team)
     path("<int:organization_id>/departments/<int:department_id>/teams/<int:team_id>/initiatives/", InitiativeListCreateAPIView.as_view(), name="initiative-list"),

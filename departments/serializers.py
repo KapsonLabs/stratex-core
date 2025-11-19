@@ -1,6 +1,6 @@
 from rest_framework import serializers
-
-from .models import Department, DepartmentObjective, Team, TeamObjective, KPI, Initiative, Employee, EmployeeReportingLine
+from datetime import date
+from .models import Department, DepartmentObjective, Team, TeamObjective, KPI, KPIScore, Initiative, Employee, EmployeeReportingLine
 
 
 # Department Serializers
@@ -118,14 +118,27 @@ class KPICreateSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class KPIScoreSerializer(serializers.ModelSerializer):
+    """Serializer for KPI Score."""
+    class Meta:
+        model = KPIScore
+        fields = ["id", "period_label", "date", "value", "notes", "created_at"]
+
+
 class KPIDetailSerializer(serializers.ModelSerializer):
     objective = serializers.StringRelatedField(read_only=True)
     department_objective = serializers.StringRelatedField(read_only=True)
     team_objective = serializers.StringRelatedField(read_only=True)
+    scores = serializers.SerializerMethodField()
 
     class Meta:
         model = KPI
-        fields = ["id", "name", "description", "formula", "target_value", "current_value", "unit", "frequency", "status", "owner_id","level", "objective", "department_objective", "team_objective", "financial_year", "created_at", "updated_at"]
+        fields = ["id", "name", "description", "formula", "target_value", "current_value", "unit", "frequency", "status", "owner_id","level", "objective", "department_objective", "team_objective", "financial_year", "scores", "created_at", "updated_at"]
+
+    def get_scores(self, obj):
+        """Return KPI scores ordered from latest (newest first)."""
+        scores = obj.scores.all()  # Already ordered by Meta.ordering: ["-date", "-id"]
+        return KPIScoreSerializer(scores, many=True).data
 
 
 # Initiative Serializers
