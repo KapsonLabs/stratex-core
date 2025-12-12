@@ -31,6 +31,11 @@ class OrganizationDetailSerializer(serializers.ModelSerializer):
         return obj.strategic_plan_periods.count()
 
 
+class OrganizationShortDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Organization
+        fields = ["id", "name"]
+
 # Vision Serializers
 class VisionCreateSerializer(serializers.ModelSerializer):
     class Meta:

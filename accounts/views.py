@@ -10,6 +10,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from tenants.models import SystemModulePermission, Tenant
 from .models import Role, User, RolePermission
 from .serializers import RoleSerializer, UserSerializer, AuthUserSerializer
+from strategy.serializers import OrganizationShortDetailSerializer
 
 
 def parse_bool(value):
@@ -145,23 +146,18 @@ class TenantAuthAPIView(APIView):
         if not is_valid:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         user = serializer.validated_data["user"]
-            
-        permissions = [
-            {
-                "module": p.resource.module.code,
-                "action": p.action,
-                "codename": p.codename,
-                "name": p.name,
-            }
-            for p in user.get_permissions()
-        ]
 
         # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
 
+        # Get organization details if user has one
+        organization_data = None
+        if user.organization:
+            organization_data = OrganizationShortDetailSerializer(user.organization).data
+
         return Response({
             "user": UserSerializer(user).data,
-            "permissions": permissions,
+            "organization": organization_data,
             "tokens": {
                 "refresh": str(refresh),
                 "access": str(refresh.access_token),
