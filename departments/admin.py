@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Department, DepartmentObjective, Team, TeamObjective, KPI, Initiative, Employee, EmployeeReportingLine
+from .models import Department, DepartmentObjective, Team, TeamObjective, Initiative, Employee, EmployeeReportingLine
 
 
 @admin.register(Department)
@@ -29,13 +29,6 @@ class TeamObjectiveAdmin(admin.ModelAdmin):
     list_display = ("team_objective_name", "team", "dept_objective", "status", "created_at")
     list_filter = ("status", "team")
     search_fields = ("team_objective_name", "team__name", "team_objective_target")
-
-
-@admin.register(KPI)
-class KPIAdmin(admin.ModelAdmin):
-    list_display = ("name", "level", "objective", "department_objective", "team_objective", "target_value", "current_value", "unit", "frequency", "status", "owner_id", "created_at")
-    list_filter = ("level", "status")
-    search_fields = ("name", "formula")
 
 
 @admin.register(Initiative)

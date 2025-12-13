@@ -4,13 +4,183 @@ Management command to set up departments and department objectives from legacy S
 
 from django.core.management.base import BaseCommand
 from decimal import Decimal
+from datetime import date
+from calendar import monthrange
+import re
+import hashlib
 
 from strategy.models import Organization, Objective
-from departments.models import Department, DepartmentObjective, Team, KPI, TeamObjective, KPIScore
+from departments.models import Department, DepartmentObjective, Team, TeamObjective
+from indicators.models import (
+    KPI, KPIValue, KPIScore,
+    ReportingPeriod, Direction, IndicatorType
+)
 
 
 class Command(BaseCommand):
     help = "Set up departments and department objectives from legacy SQL data"
+
+    def generate_kpi_code(self, name: str, dept_obj_id: int = None, team_obj_id: int = None) -> str:
+        """Generate a unique KPI code from name and context."""
+        # Clean name: remove special chars, convert to uppercase, replace spaces with hyphens
+        clean_name = re.sub(r'[^a-zA-Z0-9\s]', '', name)
+        clean_name = re.sub(r'\s+', '-', clean_name.strip())
+        clean_name = clean_name.upper()
+        
+        # Limit length
+        if len(clean_name) > 40:
+            clean_name = clean_name[:40]
+        
+        # Add context if needed for uniqueness
+        prefix = "KPI"
+        if dept_obj_id:
+            prefix = f"KPI-DEPT-{dept_obj_id}"
+        elif team_obj_id:
+            prefix = f"KPI-TEAM-{team_obj_id}"
+        
+        code = f"{prefix}-{clean_name}"
+        
+        # Ensure uniqueness by checking and appending hash if needed
+        if KPI.objects.filter(code=code).exists():
+            hash_suffix = hashlib.md5(name.encode()).hexdigest()[:8].upper()
+            code = f"{code}-{hash_suffix}"
+        
+        return code
+
+    def infer_direction(self, name: str, formula: str = "") -> str:
+        """Infer if higher or lower is better based on KPI name and formula."""
+        name_lower = name.lower()
+        formula_lower = formula.lower() if formula else ""
+        combined = f"{name_lower} {formula_lower}"
+        
+        # Lower is better indicators
+        lower_indicators = [
+            "reduce", "decrease", "minimize", "below", "debt", "debtor", "creditor",
+            "rolled over", "rolled-over", "cost", "expenditure", "time taken",
+            "turnaround", "response time", "waiting", "delay", "error", "failure"
+        ]
+        
+        for indicator in lower_indicators:
+            if indicator in combined:
+                return Direction.LOWER_BETTER
+        
+        # Default to higher is better
+        return Direction.HIGHER_BETTER
+
+    def infer_indicator_type(self, name: str, formula: str = "") -> str:
+        """Infer indicator type based on KPI name and formula."""
+        name_lower = name.lower()
+        formula_lower = formula.lower() if formula else ""
+        combined = f"{name_lower} {formula_lower}"
+        
+        # Outcome indicators (results, impacts)
+        outcome_keywords = [
+            "satisfaction", "growth", "revenue", "achieved", "attained", "met",
+            "targets achieved", "success", "productivity", "retention", "performance"
+        ]
+        
+        # Output indicators (deliverables)
+        output_keywords = [
+            "completed", "delivered", "produced", "issued", "published", "submitted",
+            "resolved", "addressed", "implemented", "executed", "initiated"
+        ]
+        
+        # Process indicators (efficiency, timeliness)
+        process_keywords = [
+            "timeliness", "within", "days", "weeks", "time", "efficiency", "turnaround",
+            "response", "cycle", "process", "workflow", "utilization", "availability"
+        ]
+        
+        # Input indicators (resources, capacity)
+        input_keywords = [
+            "budget", "resources", "staff", "trained", "capacity", "allocation",
+            "funding", "investment"
+        ]
+        
+        if any(kw in combined for kw in outcome_keywords):
+            return IndicatorType.OUTCOME
+        elif any(kw in combined for kw in output_keywords):
+            return IndicatorType.OUTPUT
+        elif any(kw in combined for kw in process_keywords):
+            return IndicatorType.PROCESS
+        elif any(kw in combined for kw in input_keywords):
+            return IndicatorType.INPUT
+        
+        # Default to process
+        return IndicatorType.PROCESS
+
+    def infer_reporting_period(self, name: str, formula: str = "") -> str:
+        """Infer reporting period based on KPI name and formula."""
+        name_lower = name.lower()
+        formula_lower = formula.lower() if formula else ""
+        combined = f"{name_lower} {formula_lower}"
+        
+        if "daily" in combined or "day" in combined and "days" not in combined:
+            return ReportingPeriod.DAILY
+        elif "weekly" in combined or "week" in combined:
+            return ReportingPeriod.WEEKLY
+        elif "quarterly" in combined or "quarter" in combined:
+            return ReportingPeriod.QUARTERLY
+        elif "annual" in combined or "year" in combined or "fy" in combined:
+            return ReportingPeriod.ANNUAL
+        else:
+            # Default to monthly
+            return ReportingPeriod.MONTHLY
+
+    def infer_scoring_config(self, name: str, target: Decimal = None) -> dict:
+        """Infer appropriate scoring configuration based on KPI characteristics."""
+        name_lower = name.lower()
+        
+        # Check if it's a percentage-based KPI
+        is_percentage = "%" in name or "percentage" in name_lower or "rate" in name_lower
+        
+        # For percentage KPIs with specific targets, use threshold scoring
+        if is_percentage and target:
+            # Determine if it's a high-stakes KPI (satisfaction, quality, etc.)
+            high_stakes_keywords = ["satisfaction", "quality", "compliance", "availability", "uptime"]
+            is_high_stakes = any(kw in name_lower for kw in high_stakes_keywords)
+            
+            if is_high_stakes:
+                # Threshold scoring for high-stakes KPIs
+                return {
+                    "type": "threshold",
+                    "thresholds": [
+                        {"min": 0, "max": 0.7, "score": 50},
+                        {"min": 0.7, "max": 0.85, "score": 75},
+                        {"min": 0.85, "max": 1.0, "score": 100},
+                        {"min": 1.0, "max": 2.0, "score": 120}
+                    ],
+                    "null_policy": "use_baseline"
+                }
+            else:
+                # Linear scoring for standard percentage KPIs
+                return {
+                    "type": "linear",
+                    "floor": 0,
+                    "cap": 120,
+                    "null_policy": "zero"
+                }
+        
+        # For score-based KPIs (satisfaction scores, etc.)
+        if "score" in name_lower:
+            return {
+                "type": "threshold",
+                "thresholds": [
+                    {"min": 0, "max": 0.6, "score": 40},
+                    {"min": 0.6, "max": 0.75, "score": 70},
+                    {"min": 0.75, "max": 1.0, "score": 100},
+                    {"min": 1.0, "max": 2.0, "score": 120}
+                ],
+                "null_policy": "use_baseline"
+            }
+        
+        # Default to linear scoring
+        return {
+            "type": "linear",
+            "floor": 0,
+            "cap": 120,
+            "null_policy": "zero"
+        }
 
     def handle(self, *args, **options):
         self.stdout.write("Setting up departments and department objectives...")
@@ -582,21 +752,70 @@ class Command(BaseCommand):
                 kpis_skipped += 1
                 continue
 
-            # Create KPI with level="department" linked to department_objective
+            # Infer KPI properties
+            code = self.generate_kpi_code(kpi_data["name"], dept_obj_id=dept_objective.id)
+            direction = self.infer_direction(kpi_data["name"], kpi_data.get("formula", ""))
+            indicator_type = self.infer_indicator_type(kpi_data["name"], kpi_data.get("formula", ""))
+            reporting_period = self.infer_reporting_period(kpi_data["name"], kpi_data.get("formula", ""))
+            scoring_config = self.infer_scoring_config(kpi_data["name"], Decimal(str(kpi_data["target"])) if kpi_data.get("target") else None)
+            
+            # Determine unit
+            unit = "%"
+            if "score" in kpi_data["name"].lower() and "%" not in kpi_data["name"]:
+                unit = "score"
+            elif "days" in kpi_data["name"].lower() or "time" in kpi_data["name"].lower():
+                unit = "days"
+            elif "ugx" in kpi_data["name"].lower() or "revenue" in kpi_data["name"].lower() or "budget" in kpi_data["name"].lower():
+                unit = "UGX"
+
+            # Create KPI linked to department_objective
             kpi, created = KPI.objects.get_or_create(
-                department_objective=dept_objective,
-                name=kpi_data["name"],
+                code=code,
                 defaults={
-                    "level": "department",
-                    "formula": kpi_data["formula"],
-                    "target_value": Decimal(str(kpi_data["target"])) if kpi_data["target"] else None,
-                    "current_value": Decimal(str(kpi_data["current_value"])) if kpi_data.get("current_value") is not None else None,
-                    "unit": "%",  # Most KPIs are percentages
+                    "name": kpi_data["name"],
+                    "description": f"KPI for {dept_objective.department_objective_name}",
+                    "department_objective": dept_objective,
+                    "formula": kpi_data.get("formula", ""),
+                    "unit": unit,
+                    "direction": direction,
+                    "indicator_type": indicator_type,
+                    "reporting_period": reporting_period,
+                    "weight": Decimal("100.0"),
+                    "scoring_config": scoring_config,
+                    "is_composite": False,
+                    "metadata": {},
+                    "owner_id": dept_objective.department.head_id if dept_objective.department.head_id else None,
                 },
             )
             if created:
                 kpis_created += 1
-                self.stdout.write(f"  ✓ Created KPI: {kpi.name}")
+                self.stdout.write(f"  ✓ Created KPI: {kpi.code} - {kpi.name}")
+                
+                # Create KPIValue for initial target/actual if provided
+                if kpi_data.get("target") or kpi_data.get("current_value"):
+                    # Use current date for period (will be updated when actual data is loaded)
+                    today = date.today()
+                    period_start = date(today.year, today.month, 1)
+                    # Get last day of month
+                    last_day = monthrange(today.year, today.month)[1]
+                    period_end = date(today.year, today.month, last_day)
+                    
+                    KPIValue.objects.create(
+                        kpi=kpi,
+                        period_start=period_start,
+                        period_end=period_end,
+                        target=Decimal(str(kpi_data["target"])) if kpi_data.get("target") else None,
+                        actual=Decimal(str(kpi_data["current_value"])) if kpi_data.get("current_value") else None,
+                        notes="Initial value from legacy data migration"
+                    )
+            else:
+                # Update existing KPI if needed
+                updated = False
+                if kpi.department_objective != dept_objective:
+                    kpi.department_objective = dept_objective
+                    updated = True
+                if updated:
+                    kpi.save()
             
             # Map old measure_id to KPI for team objectives
             # Find the measure_id by matching KPI name (case-insensitive, ignore trailing periods)
@@ -1246,42 +1465,77 @@ class Command(BaseCommand):
                 team_kpis_skipped += 1
                 continue
 
-            # Map status: 1 -> "On Track"
-            kpi_status = "On Track" if kpi_data["status"] == 1 else "Behind"
+            # Infer KPI properties
+            code = self.generate_kpi_code(kpi_data["name"], team_obj_id=team_objective.id)
+            direction = self.infer_direction(kpi_data["name"], kpi_data.get("formula", ""))
+            indicator_type = self.infer_indicator_type(kpi_data["name"], kpi_data.get("formula", ""))
+            reporting_period = self.infer_reporting_period(kpi_data["name"], kpi_data.get("formula", ""))
+            scoring_config = self.infer_scoring_config(kpi_data["name"], Decimal(str(kpi_data["target"])) if kpi_data.get("target") else None)
+            
+            # Determine unit
+            unit = "%"
+            if "score" in kpi_data["name"].lower() and "%" not in kpi_data["name"]:
+                unit = "score"
+            elif "days" in kpi_data["name"].lower() or "time" in kpi_data["name"].lower():
+                unit = "days"
+            elif "ugx" in kpi_data["name"].lower() or "revenue" in kpi_data["name"].lower() or "budget" in kpi_data["name"].lower():
+                unit = "UGX"
 
             # Create team KPI
             kpi, created = KPI.objects.get_or_create(
-                team_objective=team_objective,
-                name=kpi_data["name"],
+                code=code,
                 defaults={
-                    "level": "team",
-                    "formula": kpi_data["formula"],
-                    "target_value": Decimal(str(kpi_data["target"])) if kpi_data["target"] else None,
-                    "unit": "%",
-                    "status": kpi_status,
+                    "name": kpi_data["name"],
+                    "description": f"KPI for {team_objective.team_objective_name}",
+                    "team_objective": team_objective,
+                    "formula": kpi_data.get("formula", ""),
+                    "unit": unit,
+                    "direction": direction,
+                    "indicator_type": indicator_type,
+                    "reporting_period": reporting_period,
+                    "weight": Decimal("100.0"),
+                    "scoring_config": scoring_config,
+                    "is_composite": False,
+                    "metadata": {},
                     "owner_id": team_objective.team.lead_id if team_objective.team.lead_id else None,
                 },
             )
             if created:
                 team_kpis_created += 1
-                self.stdout.write(f"  ✓ Created Team KPI: {kpi.name}")
+                self.stdout.write(f"  ✓ Created Team KPI: {kpi.code} - {kpi.name}")
 
-            # Create KPIScore if score exists
-            if kpi_data.get("score") is not None and kpi_data["score"] > 0:
-                score, score_created = KPIScore.objects.get_or_create(
+            # Create KPIValue for target/actual if provided
+            kpi_value = None
+            if kpi_data.get("target") or kpi_data.get("score"):
+                today = date.today()
+                period_start = date(today.year, today.month, 1)
+                last_day = monthrange(today.year, today.month)[1]
+                period_end = date(today.year, today.month, last_day)
+                
+                kpi_value, value_created = KPIValue.objects.get_or_create(
                     kpi=kpi,
-                    value=Decimal(str(kpi_data["score"])),
+                    period_start=period_start,
+                    period_end=period_end,
                     defaults={
-                        "period_label": "",  # Ignoring reporting_period_id for now
-                        "notes": f"Initial score from legacy data (old measure ID: {kpi_data['old_id']})",
-                    },
+                        "target": Decimal(str(kpi_data["target"])) if kpi_data.get("target") else None,
+                        "actual": Decimal(str(kpi_data["score"])) if kpi_data.get("score") else None,
+                        "notes": f"Initial value from legacy data (old measure ID: {kpi_data.get('old_id', 'N/A')})",
+                    }
                 )
-                if score_created:
-                    kpi_scores_created += 1
-                    # Update KPI current_value if not set
-                    if not kpi.current_value:
-                        kpi.current_value = Decimal(str(kpi_data["score"]))
-                        kpi.save(update_fields=["current_value"])
+
+            # Create KPIScore if score exists and KPIValue was created
+            if kpi_data.get("score") is not None and kpi_data["score"] > 0 and kpi_value:
+                # Check if score already exists
+                if not hasattr(kpi_value, 'score'):
+                    # Import compute_kpi_score to calculate proper score
+                    from indicators.utils import compute_kpi_score
+                    try:
+                        kpi_score = compute_kpi_score(kpi, kpi_value)
+                        kpi_scores_created += 1
+                    except Exception as e:
+                        self.stdout.write(
+                            self.style.WARNING(f"  ⚠ Could not compute score for KPI {kpi.code}: {str(e)}")
+                        )
 
         self.stdout.write(
             self.style.SUCCESS(f"✓ Created {team_kpis_created} Team KPIs")
@@ -1303,7 +1557,8 @@ class Command(BaseCommand):
         self.stdout.write(f"Department Objectives: {DepartmentObjective.objects.filter(department__organization=organization).count()}")
         self.stdout.write(f"Teams: {Team.objects.filter(department__organization=organization).count()}")
         self.stdout.write(f"Team Objectives: {TeamObjective.objects.filter(team__department__organization=organization).count()}")
-        self.stdout.write(f"Department KPIs: {KPI.objects.filter(level='department', department_objective__department__organization=organization).count()}")
-        self.stdout.write(f"Team KPIs: {KPI.objects.filter(level='team', team_objective__team__department__organization=organization).count()}")
-        self.stdout.write(f"KPI Scores: {KPIScore.objects.filter(kpi__team_objective__team__department__organization=organization).count()}")
+        self.stdout.write(f"Department KPIs: {KPI.objects.filter(department_objective__department__organization=organization).count()}")
+        self.stdout.write(f"Team KPIs: {KPI.objects.filter(team_objective__team__department__organization=organization).count()}")
+        self.stdout.write(f"KPI Values: {KPIValue.objects.filter(kpi__department_objective__department__organization=organization).count() + KPIValue.objects.filter(kpi__team_objective__team__department__organization=organization).count()}")
+        self.stdout.write(f"KPI Scores: {KPIScore.objects.filter(kpi_value__kpi__department_objective__department__organization=organization).count() + KPIScore.objects.filter(kpi_value__kpi__team_objective__team__department__organization=organization).count()}")
         self.stdout.write("=" * 60)
